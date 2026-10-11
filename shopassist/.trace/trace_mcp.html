@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>MCP trace</title>
+<style>
+  :root { --bg:#1e1e1e; --panel:#252526; --ink:#e6e9ee; --muted:#8b949e; --accent:#d97757; --line:#3a3f47; --err:#e39b9b; }
+  html,body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.4 -apple-system, "Segoe UI", sans-serif; height:100%; }
+  .wrap { padding:12px 14px; display:flex; flex-direction:column; height:100%; box-sizing:border-box; }
+  h1 { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin:0 0 8px; font-weight:600; }
+  .node { background:var(--panel); border:2px solid var(--line); border-radius:10px; padding:6px 12px; display:flex; align-items:center; gap:10px; transition:border-color .25s, box-shadow .25s; }
+  .node.on { border-color:var(--accent); box-shadow:0 0 0 3px rgba(217,119,87,.18); }
+  .node .ic { width:30px; height:30px; border-radius:50%; background:#2d3139; display:grid; place-items:center; font-size:15px; }
+  .node b { display:block; font-size:14px; } .node small { color:var(--muted); font-size:12px; }
+  .link { position:relative; height:34px; margin-left:28px; border-left:2px solid var(--line); }
+  .dot { position:absolute; left:-7px; width:12px; height:12px; border-radius:50%; background:var(--accent); opacity:0; top:0; }
+  .dot.go { animation:down 1.1s ease-in-out forwards; } .dot.ret { animation:up 1.1s ease-in-out forwards; background:#e6e9ee; }
+  @keyframes down { from{top:-6px;opacity:1} to{top:26px;opacity:1} } @keyframes up { from{top:26px;opacity:1} to{top:-6px;opacity:1} }
+  .lab { position:absolute; left:14px; top:8px; font:12px/1 ui-monospace, Menlo, monospace; color:var(--ink); background:#2d3139; padding:4px 8px; border-radius:6px; opacity:0; transition:opacity .2s; white-space:nowrap; }
+  .lab.show { opacity:1; }
+  .log { margin-top:8px; font:11.5px/1.45 ui-monospace, Menlo, monospace; color:var(--muted); border-top:1px solid var(--line); padding-top:6px; overflow:hidden; white-space:nowrap; }
+  .log .err { color:var(--err); }
+</style>
+<div class="wrap">
+  <h1>Tool calls through MCP</h1>
+  <div class="node" id="n-cc"><div class="ic">⌘</div><div><b>Claude Code</b><small>the MCP client</small></div></div>
+  <div class="link"><div class="dot" id="d1"></div><div class="lab" id="t1"></div></div>
+  <div class="node" id="n-srv"><div class="ic">🐍</div><div><b>MCP server</b><small>mcp_server.py · lookup_order, start_return</small></div></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+  const q = (s) => document.querySelector(s); let seen = 0;
+  const on = (id) => { document.querySelectorAll('.node').forEach(n => n.classList.remove('on')); if (id) q(id).classList.add('on'); };
+  const travel = (label, back) => { const d = q('#d1'), t = q('#t1'); d.className = 'dot'; void d.offsetWidth; d.classList.add(back ? 'ret' : 'go'); t.textContent = label; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2400); };
+  const log = (txt, cls) => { const l = q('#log'); const e = document.createElement('div'); e.textContent = txt; if (cls) e.className = cls; l.appendChild(e); while (l.children.length > 6) l.removeChild(l.firstChild); };
+  async function poll() {
+    try {
+      const r = await fetch('trace.jsonl?' + Date.now(), { cache: 'no-store' }); const lines = (await r.text()).trim().split('\n').filter(Boolean);
+      if (lines.length < seen) { seen = 0; on(null); q('#log').innerHTML = ''; }
+      for (const line of lines.slice(seen)) {
+        const ev = JSON.parse(line);
+        if (ev.event === 'tool') { on('#n-cc'); travel(ev.tool + '(' + ev.order_id + ')', false); setTimeout(() => { on('#n-srv'); travel('result', true); setTimeout(() => on('#n-cc'), 1100); }, 1100); log('→ ' + ev.tool + '  order_id=' + ev.order_id); }
+      }
+      seen = lines.length;
+    } catch (e) {}
+    setTimeout(poll, 250);
+  }
+  poll();
+</script>

@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "verdict": {"type": "string", "enum": ["approve", "request_changes"]},
+    "reason": {"type": "string"}
+  },
+  "required": ["verdict", "reason"]
+}

@@ -1,0 +1,2 @@
+Hi, I want to return the blue jacket from order ORD-12345678.
+It arrived last week but it is too small. Thanks, Alex

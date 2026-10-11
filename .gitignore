@@ -1,0 +1,9 @@
+.env
+__pycache__/
+.venv/
+.vscode/
+.trace/trace.jsonl
+.trace/server.log
+review.json
+return_requests.json
+.ipynb_checkpoints/

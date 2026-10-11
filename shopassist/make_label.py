@@ -1,0 +1,15 @@
+from PIL import Image, ImageDraw, ImageFont
+
+img = Image.new("RGB", (640, 360), "white")
+d = ImageDraw.Draw(img)
+font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 30)
+small = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", 22)
+d.rectangle((10, 10, 630, 350), outline="black", width=3)
+d.text((30, 25), "SHOPASSIST STORE", font=font, fill="black")
+d.text((30, 80), "SHIP TO:  Alex Morgan", font=small, fill="black")
+d.text((30, 110), "12 Harbour Lane, Dublin", font=small, fill="black")
+d.text((30, 170), "ORDER  ORD-12345678", font=font, fill="black")
+d.text((30, 220), "ITEM   Blue jacket, size M", font=small, fill="black")
+d.rectangle((30, 270, 600, 330), fill="black")
+img.save("label.png")
+print("label.png written")
